@@ -130,5 +130,9 @@ for año in range(2019, 2024):
     df_final_con_clientes.loc[mask, f'SAIFI {año}'] = df_final_con_clientes.loc[mask, ui_mes_column] / df_final_con_clientes.loc[mask, clientes_column]
     df_final_con_clientes.loc[mask, f'SAIDI {año}'] = df_final_con_clientes.loc[mask, fdd_uixti_column] / df_final_con_clientes.loc[mask, clientes_column]
 
-# Imprime las primeras filas para verificar
-print(df_final_con_clientes.head())
+# Aseguramos que 'Código' es la primera columna
+# Creamos una lista de columnas donde 'Código' esté al principio
+columnas = ['Código'] + [col for col in df_final_con_clientes.columns if col != 'Código']
+
+# Reordenamos el DataFrame según esta nueva lista de columnas
+df_final_con_clientes = df_final_con_clientes[columnas]
