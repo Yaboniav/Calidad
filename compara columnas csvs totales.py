@@ -8,6 +8,7 @@ Created on Tue Sep 12 20:01:43 2023
 import pandas as pd
 import os
 
+
 # Establecer el directorio donde se encuentran los archivos CSV
 path = 'D://OneDrive - Grupo EPM//2. PLANEACION OPTIMA//BD_CALIDA//1. recopilación calidad'
 
