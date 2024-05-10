@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import numpy as np
 
 # Definir los nombres de las columnas para el DataFrame
 columnas_deseadas = [
@@ -56,7 +57,7 @@ df_alimentador = df_calidad[df_calidad['DESCRIPCION_CAUSA_CREG'].isin(causas_per
 df_alimentador = df_alimentador[['FPARENT', 'FDD_UIXTI', 'UI_MES', 'AÑO', "FDD_CAUSA_SSPD"]]
 
 # Eliminar filas donde 'FDD_CAUSA_SSPD' es diferente de "0"
-df_alimentador = df_alimentador[df_alimentador['FDD_CAUSA_SSPD'] == "0"]
+df_alimentador = df_alimentador[df_alimentador['FDD_CAUSA_SSPD'] == 0]
 
 # Eliminar la columna 'FDD_CAUSA_SSPD'
 df_alimentador = df_alimentador.drop(columns=['FDD_CAUSA_SSPD'])
@@ -87,32 +88,8 @@ for año in sorted(set(df_agrupado['AÑO'])):  # Nos aseguramos de que el conjun
     columnas_ordenadas.extend([f'Suma de UI_MES {año}', f'Suma de FDD_UIXTI {año}'])
 
 df_final = df_final[columnas_ordenadas]
-for año in sorted(set(df_agrupado['AÑO'])):  # Nos aseguramos de que el conjunto de años esté ordenado
-    columnas_ordenadas.extend([f'Suma de UI_MES {año}', f'Suma de FDD_UIXTI {año}'])
 
-df_final = df_final[columnas_ordenadas]
-
-for año in range(2019, 2024):
-    ui_mes_column = f'Suma de UI_MES {año}'
-    fdd_uixti_column = f'Suma de FDD_UIXTI {año}'
-    clientes_column = f'Total Clientes {año}'
-
-    # Evita la división por cero estableciendo el denominador a NaN donde sea cero antes de dividir,
-    # luego reemplaza NaN resultantes con ceros.
-    df_final_con_clientes[clientes_column] = df_final_con_clientes[clientes_column].replace(0, np.nan)
-
-    # Calcula SAIFI y SAIDI
-    df_final_con_clientes[f'SAIFI {año}'] = df_final_con_clientes[ui_mes_column] / df_final_con_clientes[clientes_column]
-    df_final_con_clientes[f'SAIDI {año}'] = df_final_con_clientes[fdd_uixti_column] / df_final_con_clientes[clientes_column]
-
-    # Reemplaza NaN con ceros después de la división
-    df_final_con_clientes[f'SAIFI {año}'].fillna(0, inplace=True)
-    df_final_con_clientes[f'SAIDI {año}'].fillna(0, inplace=True)
-
-    # Reestablece los valores originales de Total Clientes por si fue reemplazado por NaN
-    df_final_con_clientes[clientes_column].fillna(0, inplace=True)
-    
-    
+#******************************************************************************
 # Ruta al archivo de Excel y al archivo CSV
 ruta_excel = 'D://OneDrive - Grupo EPM//3. CENS//0. PIE - PIR - PF//3. Calidad del servicio//información de alimentadores 2019 - 2023.xlsx'
 ruta_csv = 'D://OneDrive - Grupo EPM//3. CENS//0. PIE - PIR - PF//3. Calidad del servicio//datos.csv'
@@ -124,6 +101,8 @@ df_info_alimentadores = pd.read_excel(ruta_excel)
 columnas_info = ['Código', 'Total Clientes 2019', 'Total Clientes 2020', 'Total Clientes 2021', 'Total Clientes 2022', 'Total Clientes 2023']
 df_info_seleccionado = df_info_alimentadores[columnas_info]
 
+#*******************************************************************************
+
 # Suponemos que df_final ya está definido y cargado con datos relevantes
 # Aquí deberías cargar o definir df_final según tus datos existentes, como un ejemplo:
 # df_final = pd.read_csv(ruta_csv)
@@ -132,28 +111,24 @@ df_info_seleccionado = df_info_alimentadores[columnas_info]
 df_final_con_clientes = pd.merge(df_final, df_info_seleccionado, left_on='FPARENT', right_on='Código', how='left')
 
 # Eliminar la columna 'Código' ya que es redundante con 'FPARENT'
-df_final_con_clientes.drop('Código', axis=1, inplace=True)
+#df_final_con_clientes.drop('Código', axis=1, inplace=True)
 
 # Realiza los cálculos de SAIFI y SAIDI por cada año
 for año in range(2019, 2024):
+    # Preparamos los nombres de las columnas para cada año
     ui_mes_column = f'Suma de UI_MES {año}'
     fdd_uixti_column = f'Suma de FDD_UIXTI {año}'
     clientes_column = f'Total Clientes {año}'
 
-    # Evita la división por cero estableciendo el denominador a NaN donde sea cero antes de dividir,
-    # luego reemplaza NaN resultantes con ceros.
-    df_final_con_clientes[clientes_column] = df_final_con_clientes[clientes_column].replace(0, np.nan)
+    # Inicializamos las nuevas columnas SAIFI y SAIDI para el año con ceros
+    df_final_con_clientes[f'SAIFI {año}'] = 0
+    df_final_con_clientes[f'SAIDI {año}'] = 0
 
-    # Calcula SAIFI y SAIDI
-    df_final_con_clientes[f'SAIFI {año}'] = df_final_con_clientes[ui_mes_column] / df_final_con_clientes[clientes_column]
-    df_final_con_clientes[f'SAIDI {año}'] = df_final_con_clientes[fdd_uixti_column] / df_final_con_clientes[clientes_column]
-
-    # Reemplaza NaN con ceros después de la división
-    df_final_con_clientes[f'SAIFI {año}'].fillna(0, inplace=True)
-    df_final_con_clientes[f'SAIDI {año}'].fillna(0, inplace=True)
-
-    # Reestablece los valores originales de Total Clientes por si fue reemplazado por NaN
-    df_final_con_clientes[clientes_column].fillna(0, inplace=True)
+    # Verificamos si hay clientes antes de dividir para evitar divisiones por cero
+    # y calcular los índices SAIFI y SAIDI de manera vectorizada
+    mask = df_final_con_clientes[clientes_column] > 0  # Máscara para verificar donde hay clientes
+    df_final_con_clientes.loc[mask, f'SAIFI {año}'] = df_final_con_clientes.loc[mask, ui_mes_column] / df_final_con_clientes.loc[mask, clientes_column]
+    df_final_con_clientes.loc[mask, f'SAIDI {año}'] = df_final_con_clientes.loc[mask, fdd_uixti_column] / df_final_con_clientes.loc[mask, clientes_column]
 
 # Imprime las primeras filas para verificar
 print(df_final_con_clientes.head())

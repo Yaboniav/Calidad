@@ -4,7 +4,7 @@ save_data_on_exit = True
 save_history = True
 save_non_project_files = False
 project_type = 'empty-project-type'
-recent_files = ['C:\\Users\\yaboniav\\.spyder-py3\\temp.py', 'Consolidar archivos 2019.py', 'Calidad por alimentador.py', 'extracción de titulos.py']
+recent_files = ['C:\\Users\\yaboniav\\.spyder-py3\\temp.py', 'compara columnas csvs totales.py', 'Info para catalogos RMN\\Calidad por alimentador.py']
 
 [main]
 version = 0.2.0
